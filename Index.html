@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Cat Lottery</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        body {
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+            touch-action: none;
+        }
+
+        /* ===== SETUP SCREEN ===== */
+        #setup-screen {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #f5c6aa, #f09090, #f5c6aa, #e8a0a0);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        .deco-ball {
+            position: absolute;
+            border-radius: 50%;
+            opacity: 0.4;
+            pointer-events: none;
+        }
+        .deco-ball:nth-child(1) { width: 180px; height: 180px; background: radial-gradient(circle at 35% 35%, #ffcccc, #cc5555); top: 5%; left: 5%; }
+        .deco-ball:nth-child(2) { width: 260px; height: 260px; background: radial-gradient(circle at 35% 35%, #ffe8cc, #ddaa66); top: 30%; left: 30%; }
+        .deco-ball:nth-child(3) { width: 130px; height: 130px; background: radial-gradient(circle at 35% 35%, #ffcccc, #cc5555); top: 60%; right: 8%; }
+        .deco-ball:nth-child(4) { width: 100px; height: 100px; background: radial-gradient(circle at 35% 35%, #ffdddd, #dd8888); top: 8%; right: 15%; }
+        .deco-ball:nth-child(5) { width: 160px; height: 160px; background: radial-gradient(circle at 35% 35%, #ffe0cc, #cc8866); bottom: 8%; left: 10%; }
+
+        .title {
+            font-size: 32px;
+            color: #fff;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            margin-bottom: 25px;
+            z-index: 10;
+            text-align: center;
+        }
+
+        .settings-box {
+            background: rgba(255, 255, 255, 0.88);
+            border: 2px dashed #cc8888;
+            border-radius: 15px;
+            padding: 25px 30px;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 20px;
+            font-weight: bold;
+            color: #555;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .settings-box input {
+            width: 60px;
+            height: 42px;
+            text-align: center;
+            font-size: 22px;
+            font-weight: bold;
+            border: 2px solid #cc8888;
+            border-radius: 8px;
+            outline: none;
+            background: white;
+        }
+
+        .settings-box input:focus {
+            border-color: #ff6666;
+            box-shadow: 0 0 8px rgba(255, 100, 100, 0.5);
+        }
+
+        .play-btn {
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            border: 3px solid #333;
+            background: radial-gradient(circle at 40% 40%, #ffdd44, #cc9900);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 10px rgba(0,0,0,0.3);
+        }
+
+        .play-btn::after {
+            content: '';
+            display: block;
+            width: 0;
+            height: 0;
+            border-style: solid;
+            border-width: 11px 0 11px 20px;
+            border-color: transparent transparent transparent #333;
+            margin-left: 4px;
+        }
+
+        .subtitle {
+            font-size: 16px;
+            color: #fff;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+            margin-top: 18px;
+            z-index: 10;
+            text-align: center;
+        }
+
+        /* ===== GAME SCREEN ===== */
+        #game-screen {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #f5c6aa, #f09090, #f5c6aa, #e8a0a0);
+            display: none;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .top-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            min-height: 65px;
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            z-index: 100;
+            justify-content: space-between;
+            background: rgba(0,0,0,0.15);
+            flex-wrap: wrap;
+        }
+
+        .picked-numbers {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            flex: 1;
+        }
+
+        .lottery-ball {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 35% 35%, #999, #333);
+            border: 2px solid #666;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+            animation: popIn 0.4s ease-out;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+            flex-shrink: 0;
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0); opacity: 0; }
+            70% { transform: scale(1.3); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .game-info {
+            display: flex;
+            gap: 4px;
+            flex-shrink: 0;
+            margin-left: 8px;
+        }
+
+        .info-box {
+            background: white;
+            border: 2px solid #999;
+            padding: 4px 10px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 5px;
+        }
+
+        /* Mouse */
+        #mouse-cursor {
+            position: absolute;
+            width: 90px;
+            height: 90px;
+            z-index: 50;
+            pointer-events: auto;
+        }
+
+        .game-deco-ball {
+            position: absolute;
+            border-radius: 50%;
+            opacity: 0.45;
+            pointer-events: none;
+        }
+
+        /* Message */
+        .message-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255,255,255,0.92);
+            padding: 22px 32px;
+            font-size: 20px;
+            font-weight: bold;
+            text-align: center;
+            border-radius: 12px;
+            z-index: 200;
+            display: none;
+            line-height: 1.6;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        /* Catch effects */
+        .catch-flash {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            animation: catchFlash 0.3s ease-out;
+            pointer-events: none;
+            z-index: 60;
+        }
+
+        @keyframes catchFlash {
+            0% { background: rgba(255,255,100,0.7); }
+            100% { background: transparent; }
+        }
+
+        .paw-print {
+            position: absolute;
+            font-size: 45px;
+            z-index: 55;
+            opacity: 0;
+            animation: pawFade 1s ease-out forwards;
+            pointer-events: none;
+        }
+
+        @keyframes pawFade {
+            0% { opacity: 1; transform: scale(0.5); }
+            50% { opacity: 0.8; transform: scale(1); }
+            100% { opacity: 0; transform: scale(1.3); }
+        }
+
+        .number-popup {
+            position: absolute;
+            font-size: 55px;
+            font-weight: bold;
+            color: #ffdd44;
+            text-shadow: 2px 2px 6px rgba(0,0,0,0.6);
+            z-index: 55;
+            pointer-events: none;
+            animation: numberFloat 1.5s ease-out forwards;
+        }
+
+        @keyframes numberFloat {
+            0% { opacity: 1; transform: translateY(0) scale(1); }
+            100% { opacity: 0; transform: translateY(-120px) scale(1.5); }
+        }
+
+        /* Remaining counter */
+        .remaining-badge {
+            position: absolute;
+            bottom: 15px;
+            right: 15px;
+            background: rgba(0,0,0,0.5);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 16px;
+            font-weight: bold;
+            z-index: 100;
+        }
+
+        /* ===== COMPLETE SCREEN ===== */
+        #complete-screen {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            position: relative;
+        }
+
+        .complete-title {
+            font-size: 28px;
+            color: #fff;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            text-align: center;
+        }
+
+        .final-numbers {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-bottom: 35px;
+            max-width: 500px;
+        }
+
+        .final-ball {
+            width: 65px;
+            height: 65px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 35% 35%, #ffdd44, #cc9900);
+            border: 3px solid #aa7700;
+            color: #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(255,200,0,0.4);
+            animation: popIn 0.5s ease-out;
+        }
+
+        .restart-btn {
+            padding: 14px 35px;
+            font-size: 20px;
+            font-weight: bold;
+            background: radial-gradient(circle at 40% 40%, #ffdd44, #cc9900);
+            border: 3px solid #aa7700;
+            border-radius: 30px;
+            cursor: pointer;
+            color: #333;
+        }
+
+        /* Confetti */
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            opacity: 0;
+            pointer-events: none;
+            animation: confettiFall 3s ease-out forwards;
+        }
+
+        @keyframes confettiFall {
+            0% { opacity: 1; transform: translateY(0) rotate(0deg); }
+            100% { opacity: 0; transform: translateY(100vh) rotate(720deg); }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- SCREEN 1: SETUP -->
+    <div id="setup-screen">
+        <div class="deco-ball"></div>
+        <div class="deco-ball"></div>
+        <div class="deco-ball"></div>
+        <div class="deco-ball"></div>
+        <div class="deco-ball"></div>
+
+        <div class="title">🐱 Cat Lottery 🐭</div>
+
+        <div class="settings-box">
+            <span>Find</span>
+            <input type="number" id="count-input" value="7" min="1" max="20">
+            <span>numbers from 1 -</span>
+            <input type="number" id="max-input" value="36" min="2" max="99">
+            <div class="play-btn" id="play-btn"></div>
+        </div>
+
+        <div class="subtitle">Let your cat pick lucky numbers! 🍀</div>
+    </div>
+
+    <!-- SCREEN 2: GAME -->
+    <div id="game-screen">
+        <div class="top-bar">
+            <div class="picked-numbers" id="picked-numbers"></div>
+            <div class="game-info">
+                <div class="info-box" id="info-count"></div>
+                <div class="info-box" id="info-max"></div>
+            </div>
+        </div>
+
+        <div id="game-decorations"></div>
+
+        <div id="mouse-cursor">
+            <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <path d="M 15 45 Q 0 30, 5 15 Q 8 5, 15 10" stroke="#8B6914" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+                <ellipse cx="50" cy="50" rx="32" ry="22" fill="#8B7355"/>
+                <ellipse cx="50" cy="50" rx="30" ry="20" fill="#A0845C"/>
+                <ellipse cx="45" cy="48" rx="20" ry="14" fill="#B8956A" opacity="0.5"/>
+                <ellipse cx="78" cy="48" rx="16" ry="14" fill="#A0845C"/>
+                <ellipse cx="72" cy="35" rx="6" ry="8" fill="#A0845C" transform="rotate(-15,72,35)"/>
+                <ellipse cx="72" cy="35" rx="4" ry="6" fill="#D4A574" transform="rotate(-15,72,35)"/>
+                <ellipse cx="84" cy="37" rx="6" ry="8" fill="#A0845C" transform="rotate(15,84,37)"/>
+                <ellipse cx="84" cy="37" rx="4" ry="6" fill="#D4A574" transform="rotate(15,84,37)"/>
+                <circle cx="80" cy="45" r="3" fill="black"/>
+                <circle cx="81" cy="44" r="1" fill="white"/>
+                <circle cx="73" cy="46" r="2.5" fill="black"/>
+                <circle cx="74" cy="45" r="0.8" fill="white"/>
+                <ellipse cx="90" cy="48" rx="3" ry="2" fill="#FF9999"/>
+                <line x1="88" y1="46" x2="100" y2="43" stroke="#666" stroke-width="0.8"/>
+                <line x1="89" y1="48" x2="100" y2="48" stroke="#666" stroke-width="0.8"/>
+                <line x1="88" y1="50" x2="100" y2="53" stroke="#666" stroke-width="0.8"/>
+            </svg>
+        </div>
+
+        <div class="message-overlay" id="game-message">
+            🐱 Each time your cat catches<br>the mouse, a random number<br>will be picked! 🐭
+        </div>
+
+        <div class="remaining-badge" id="remaining-badge"></div>
+    </div>
+
+    <!-- SCREEN 3: COMPLETE -->
+    <div id="complete-screen">
+        <div class="complete-title">🎉 Your Cat's Lucky Numbers! 🎉</div>
+        <div class="final-numbers" id="final-numbers"></div>
+        <button class="restart-btn" id="restart-btn">🐱 Play Again</button>
+    </div>
+
+    <script>
+        // === VARIABLES ===
+        let totalCount = 7;
+        let maxNumber = 36;
+        let pickedNumbers = [];
+        let mouseX = 200;
+        let mouseY = 300;
+        let mouseSpeedX = 2;
+        let mouseSpeedY = 1.5;
+        let gameRunning = false;
+        let moveInterval;
+        let directionTimer;
+
+        // === GET HTML ELEMENTS ===
+        const setupScreen = document.getElementById('setup-screen');
+        const gameScreen = document.getElementById('game-screen');
+        const completeScreen = document.getElementById('complete-screen');
+        const playBtn = document.getElementById('play-btn');
+        const countInput = document.getElementById('count-input');
+        const maxInput = document.getElementById('max-input');
+        const mouseCursor = document.getElementById('mouse-cursor');
+        const pickedNumbersDiv = document.getElementById('picked-numbers');
+        const infoCount = document.getElementById('info-count');
+        const infoMax = document.getElementById('info-max');
+        const gameMessage = document.getElementById('game-message');
+        const finalNumbers = document.getElementById('final-numbers');
+        const restartBtn = document.getElementById('restart-btn');
+        const remainingBadge = document.getElementById('remaining-badge');
+
+        // === PLAY BUTTON ===
+        playBtn.addEventListener('click', function () {
+            totalCount = parseInt(countInput.value) || 7;
+            maxNumber = parseInt(maxInput.value) || 36;
+
+            if (totalCount > maxNumber) {
+                alert('Cannot pick ' + totalCount + ' unique numbers from only ' + maxNumber + '!');
+                return;
+            }
+            if (totalCount < 1 || maxNumber < 1) {
+                alert('Please enter valid numbers!');
+                return;
+            }
+            startGame();
+        });
+
+        // === START GAME ===
+        function startGame() {
+            pickedNumbers = [];
+            pickedNumbersDiv.innerHTML = '';
+
+            infoCount.textContent = totalCount;
+            infoMax.textContent = maxNumber;
+            updateRemaining();
+
+            setupScreen.style.display = 'none';
+            gameScreen.style.display = 'block';
+            completeScreen.style.display = 'none';
+
+            createDecorations();
+
+            gameMessage.style.display = 'block';
+            setTimeout(function () {
+                gameMessage.style.display = 'none';
+            }, 3000);
+
+            const sw = gameScreen.offsetWidth;
+            const sh = gameScreen.offsetHeight;
+            mouseX = sw / 2 - 45;
+            mouseY = sh / 2 - 45;
+
+            gameRunning = true;
+            startMouseMovement();
+        }
+
+        function updateRemaining() {
+            const left = totalCount - pickedNumbers.length;
+            remainingBadge.textContent = left + ' number' + (left !== 1 ? 's' : '') + ' left';
+        }
+
+        // === MOUSE MOVEMENT ===
+        function startMouseMovement() {
+            randomizeDirection();
+
+            if (moveInterval) clearInterval(moveInterval);
+            moveInterval = setInterval(function () {
+                if (!gameRunning) return;
+
+                const sw = gameScreen.offsetWidth;
+                const sh = gameScreen.offsetHeight;
+                const ms = 90;
+
+                mouseX += mouseSpeedX;
+                mouseY += mouseSpeedY;
+
+                if (mouseX <= 0) { mouseX = 0; mouseSpeedX = Math.abs(mouseSpeedX); wiggle(); }
+                if (mouseX >= sw - ms) { mouseX = sw - ms; mouseSpeedX = -Math.abs(mouseSpeedX); wiggle(); }
+                if (mouseY <= 70) { mouseY = 70; mouseSpeedY = Math.abs(mouseSpeedY); wiggle(); }
+                if (mouseY >= sh - ms) { mouseY = sh - ms; mouseSpeedY = -Math.abs(mouseSpeedY); wiggle(); }
+
+                mouseCursor.style.left = mouseX + 'px';
+                mouseCursor.style.top = mouseY + 'px';
+
+                const angle = Math.atan2(mouseSpeedY, mouseSpeedX) * (180 / Math.PI);
+                mouseCursor.style.transform = 'rotate(' + angle + 'deg)';
+            }, 20);
+
+            scheduleDirectionChange();
+        }
+
+        function randomizeDirection() {
+            const speed = 2 + Math.random() * 3;
+            const angle = Math.random() * Math.PI * 2;
+            mouseSpeedX = Math.cos(angle) * speed;
+            mouseSpeedY = Math.sin(angle) * speed;
+        }
+
+        function wiggle() {
+            mouseSpeedX += (Math.random() - 0.5) * 2;
+            mouseSpeedY += (Math.random() - 0.5) * 2;
+        }
+
+        function scheduleDirectionChange() {
+            if (directionTimer) clearTimeout(directionTimer);
+            directionTimer = setTimeout(function () {
+                if (!gameRunning) return;
+
+                if (Math.random() < 0.3) {
+                    randomizeDirection();
+                } else {
+                    wiggle();
+                }
+
+                if (Math.random() < 0.2) {
+                    const m = 0.5 + Math.random() * 1.5;
+                    mouseSpeedX *= m;
+                    mouseSpeedY *= m;
+                    const cap = 6;
+                    mouseSpeedX = Math.max(-cap, Math.min(cap, mouseSpeedX));
+                    mouseSpeedY = Math.max(-cap, Math.min(cap, mouseSpeedY));
+                }
+
+                scheduleDirectionChange();
+            }, 800 + Math.random() * 2200);
+        }
+
+        // === CATCH MOUSE ===
+        function handleCatch(tx, ty) {
+            if (!gameRunning) return;
+            if (pickedNumbers.length >= totalCount) return;
+
+            const rect = mouseCursor.getBoundingClientRect();
+            const margin = 25;
+
+            if (tx >= rect.left - margin && tx <= rect.right + margin &&
+                ty >= rect.top - margin && ty <= rect.bottom + margin) {
+                catchMouse(tx, ty);
+            }
+        }
+
+        gameScreen.addEventListener('touchstart', function (e) {
+            e.preventDefault();
+            for (let i = 0; i < e.touches.length; i++) {
+                handleCatch(e.touches[i].clientX, e.touches[i].clientY);
+            }
+        }, { passive: false });
+
+        gameScreen.addEventListener('mousedown', function (e) {
+            handleCatch(e.clientX, e.clientY);
+        });
+
+        function catchMouse(tapX, tapY) {
+            if (!gameRunning) return;
+            if (pickedNumbers.length >= totalCount) return;
+
+            let num;
+            do {
+                num = Math.floor(Math.random() * maxNumber) + 1;
+            } while (pickedNumbers.includes(num));
+
+            pickedNumbers.push(num);
+            updateRemaining();
+
+            // Effects
+            const flash = document.createElement('div');
+            flash.className = 'catch-flash';
+            gameScreen.appendChild(flash);
+            setTimeout(function () { flash.remove(); }, 300);
+
+            const paw = document.createElement('div');
+            paw.className = 'paw-print';
+            paw.textContent = '🐾';
+            paw.style.left = (tapX - 25) + 'px';
+            paw.style.top = (tapY - 25) + 'px';
+            gameScreen.appendChild(paw);
+            setTimeout(function () { paw.remove(); }, 1000);
+
+            const popup = document.createElement('div');
+            popup.className = 'number-popup';
+            popup.textContent = num;
+            popup.style.left = (mouseX + 20) + 'px';
+            popup.style.top = (mouseY - 10) + 'px';
+            gameScreen.appendChild(popup);
+            setTimeout(function () { popup.remove(); }, 1500);
+
+            const ball = document.createElement('div');
+            ball.className = 'lottery-ball';
+            ball.textContent = num;
+            pickedNumbersDiv.appendChild(ball);
+
+            // Mouse escapes
+            const sw = gameScreen.offsetWidth;
+            const sh = gameScreen.offsetHeight;
+            mouseX = 80 + Math.random() * (sw - 200);
+            mouseY = 100 + Math.random() * (sh - 220);
+            randomizeDirection();
+
+            gameRunning = false;
+            setTimeout(function () {
+                gameRunning = true;
+            }, 600);
+
+            if (pickedNumbers.length >= totalCount) {
+                setTimeout(function () { showComplete(); }, 1500);
+            }
+        }
+
+        // === COMPLETE ===
+        function showComplete() {
+            gameRunning = false;
+            clearInterval(moveInterval);
+            clearTimeout(directionTimer);
+
+            gameScreen.style.display = 'none';
+            completeScreen.style.display = 'flex';
+
+            finalNumbers.innerHTML = '';
+            const sorted = [...pickedNumbers].sort(function (a, b) { return a - b; });
+
+            sorted.forEach(function (num, i) {
+                setTimeout(function () {
+                    const ball = document.createElement('div');
+                    ball.className = 'final-ball';
+                    ball.textContent = num;
+                    finalNumbers.appendChild(ball);
+                }, i * 300);
+            });
+
+            // Confetti
+            const colors = ['#ff6b6b', '#feca57', '#48dbfb', '#ff9ff3', '#54a0ff', '#5f27cd'];
+            for (let i = 0; i < 50; i++) {
+                setTimeout(function () {
+                    const c = document.createElement('div');
+                    c.className = 'confetti';
+                    c.style.left = Math.random() * 100 + '%';
+                    c.style.top = '-10px';
+                    c.style.background = colors[Math.floor(Math.random() * colors.length)];
+                    c.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+                    c.style.width = (6 + Math.random() * 10) + 'px';
+                    c.style.height = (6 + Math.random() * 10) + 'px';
+                    c.style.animationDuration = (2 + Math.random() * 3) + 's';
+                    completeScreen.appendChild(c);
+                    setTimeout(function () { c.remove(); }, 5000);
+                }, i * 60);
+            }
+        }
+
+        // === RESTART ===
+        restartBtn.addEventListener('click', function () {
+            completeScreen.style.display = 'none';
+            setupScreen.style.display = 'flex';
+        });
+
+        // === DECORATIONS ===
+        function createDecorations() {
+            const container = document.getElementById('game-decorations');
+            container.innerHTML = '';
+            const bgs = [
+                'radial-gradient(circle at 35% 35%, #ffcccc, #cc5555)',
+                'radial-gradient(circle at 35% 35%, #ffe8cc, #ddaa66)',
+                'radial-gradient(circle at 35% 35%, #ffdddd, #dd8888)',
+                'radial-gradient(circle at 35% 35%, #ffccdd, #cc6688)'
+            ];
+            for (let i = 0; i < 6; i++) {
+                const b = document.createElement('div');
+                b.className = 'game-deco-ball';
+                const size = 80 + Math.random() * 200;
+                b.style.width = size + 'px';
+                b.style.height = size + 'px';
+                b.style.background = bgs[Math.floor(Math.random() * bgs.length)];
+                b.style.left = Math.random() * 80 + '%';
+                b.style.top = Math.random() * 80 + '%';
+                container.appendChild(b);
+            }
+        }
+    </script>
+</body>
+</html>
